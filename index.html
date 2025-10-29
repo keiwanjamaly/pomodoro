@@ -71,6 +71,9 @@
         // Total cycle duration in milliseconds
         const CYCLE_DURATION_MS = POMODORO_CYCLE.reduce((sum, session) => sum + session.duration * 60 * 1000, 0);
         
+        // Time before long break starts (all sessions except the long break)
+        const TIME_BEFORE_LONG_BREAK_MS = POMODORO_CYCLE.slice(0, -1).reduce((sum, s) => sum + s.duration * 60 * 1000, 0);
+        
         // Target time for long break to start (13:00 in local time)
         const LONG_BREAK_TARGET_HOUR = 13;
         const LONG_BREAK_TARGET_MINUTE = 0;
@@ -80,15 +83,12 @@
         function initializeCycleStartTime() {
             const now = new Date();
             
-            // Long break is the last session in the cycle
-            let timeBeforeLongBreak = POMODORO_CYCLE.slice(0, -1).reduce((sum, s) => sum + s.duration * 60 * 1000, 0);
-            
             // Find today's 13:00
             const today13 = new Date(now);
             today13.setHours(LONG_BREAK_TARGET_HOUR, LONG_BREAK_TARGET_MINUTE, 0, 0);
             
             // Calculate today's cycle start (when long break would start at 13:00)
-            let todayCycleStart = new Date(today13.getTime() - timeBeforeLongBreak);
+            let todayCycleStart = new Date(today13.getTime() - TIME_BEFORE_LONG_BREAK_MS);
             let todayCycleEnd = new Date(todayCycleStart.getTime() + CYCLE_DURATION_MS);
             
             // Determine which cycle we're in
@@ -99,12 +99,12 @@
                 // We're before today's cycle, use yesterday's
                 let yesterday13 = new Date(today13);
                 yesterday13.setDate(yesterday13.getDate() - 1);
-                cycleStartTime = new Date(yesterday13.getTime() - timeBeforeLongBreak);
+                cycleStartTime = new Date(yesterday13.getTime() - TIME_BEFORE_LONG_BREAK_MS);
             } else {
                 // We're after today's cycle, use tomorrow's
                 let tomorrow13 = new Date(today13);
                 tomorrow13.setDate(tomorrow13.getDate() + 1);
-                cycleStartTime = new Date(tomorrow13.getTime() - timeBeforeLongBreak);
+                cycleStartTime = new Date(tomorrow13.getTime() - TIME_BEFORE_LONG_BREAK_MS);
             }
         }
         
@@ -112,11 +112,10 @@
             const now = Date.now();
             const timeSinceCycleStart = now - cycleStartTime.getTime();
             
-            // Ensure we handle the position correctly with modulo
-            let positionInCycle = timeSinceCycleStart % CYCLE_DURATION_MS;
-            if (positionInCycle < 0) {
-                positionInCycle += CYCLE_DURATION_MS;
-            }
+            // Calculate position in the current cycle
+            // Since initializeCycleStartTime ensures cycleStartTime is always in the past,
+            // timeSinceCycleStart should always be positive
+            const positionInCycle = timeSinceCycleStart % CYCLE_DURATION_MS;
             
             let elapsed = 0;
             for (let i = 0; i < POMODORO_CYCLE.length; i++) {
