@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .timer {
+            font-size: 72px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .status {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        .work {
+            color: #e74c3c;
+        }
+        .break {
+            color: #27ae60;
+        }
+        .long-break {
+            color: #3498db;
+        }
+        .info {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pomodoro Timer</h1>
+        <div class="timer" id="timer">25:00</div>
+        <div class="status" id="status">Work Session</div>
+        <div class="info" id="info">Next long break at 13:00</div>
+    </div>
+
+    <script>
+        // Pomodoro cycle: 25-5-25-5-25-5-25-5-20 (in minutes)
+        const POMODORO_CYCLE = [
+            { duration: 25, type: 'work' },
+            { duration: 5, type: 'break' },
+            { duration: 25, type: 'work' },
+            { duration: 5, type: 'break' },
+            { duration: 25, type: 'work' },
+            { duration: 5, type: 'break' },
+            { duration: 25, type: 'work' },
+            { duration: 5, type: 'break' },
+            { duration: 20, type: 'long-break' }
+        ];
+        
+        // Total cycle duration in milliseconds
+        const CYCLE_DURATION_MS = POMODORO_CYCLE.reduce((sum, session) => sum + session.duration * 60 * 1000, 0);
+        
+        // Target time for long break to start (13:00 in local time)
+        const LONG_BREAK_TARGET_HOUR = 13;
+        const LONG_BREAK_TARGET_MINUTE = 0;
+        
+        let cycleStartTime;
+        
+        function initializeCycleStartTime() {
+            const now = new Date();
+            const today13 = new Date(now);
+            today13.setHours(LONG_BREAK_TARGET_HOUR, LONG_BREAK_TARGET_MINUTE, 0, 0);
+            
+            // Find when the last long break started
+            // Long break is the last session in the cycle
+            let longBreakDuration = POMODORO_CYCLE[POMODORO_CYCLE.length - 1].duration * 60 * 1000;
+            let timeBeforeLongBreak = CYCLE_DURATION_MS - longBreakDuration;
+            
+            // The cycle should be positioned so the long break starts at 13:00
+            // Work backwards from 13:00 to find the cycle start
+            let targetCycleStart = new Date(today13.getTime() - timeBeforeLongBreak);
+            
+            // If we're past today's 13:00 long break start, use today's cycle
+            // Otherwise use yesterday's cycle
+            if (now >= today13) {
+                // We're after 13:00, so check if we should use today or tomorrow's cycle
+                let tomorrowCycleStart = new Date(targetCycleStart.getTime() + CYCLE_DURATION_MS);
+                if (now < tomorrowCycleStart) {
+                    cycleStartTime = targetCycleStart;
+                } else {
+                    // Need next cycle (tomorrow's)
+                    let tomorrow13 = new Date(today13);
+                    tomorrow13.setDate(tomorrow13.getDate() + 1);
+                    cycleStartTime = new Date(tomorrow13.getTime() - timeBeforeLongBreak);
+                }
+            } else {
+                // We're before 13:00, use yesterday's cycle
+                let yesterday13 = new Date(today13);
+                yesterday13.setDate(yesterday13.getDate() - 1);
+                cycleStartTime = new Date(yesterday13.getTime() - timeBeforeLongBreak);
+            }
+        }
+        
+        function getCurrentSessionInfo() {
+            const now = Date.now();
+            const timeSinceCycleStart = now - cycleStartTime.getTime();
+            const positionInCycle = timeSinceCycleStart % CYCLE_DURATION_MS;
+            
+            let elapsed = 0;
+            for (let i = 0; i < POMODORO_CYCLE.length; i++) {
+                const session = POMODORO_CYCLE[i];
+                const sessionDuration = session.duration * 60 * 1000;
+                
+                if (positionInCycle < elapsed + sessionDuration) {
+                    const timeInSession = positionInCycle - elapsed;
+                    const remainingTime = sessionDuration - timeInSession;
+                    
+                    return {
+                        session: session,
+                        sessionIndex: i,
+                        remaining: remainingTime
+                    };
+                }
+                
+                elapsed += sessionDuration;
+            }
+            
+            // Shouldn't reach here, but default to first session
+            return {
+                session: POMODORO_CYCLE[0],
+                sessionIndex: 0,
+                remaining: POMODORO_CYCLE[0].duration * 60 * 1000
+            };
+        }
+        
+        function formatTime(milliseconds) {
+            const totalSeconds = Math.ceil(milliseconds / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function updateDisplay() {
+            const info = getCurrentSessionInfo();
+            const timerEl = document.getElementById('timer');
+            const statusEl = document.getElementById('status');
+            
+            timerEl.textContent = formatTime(info.remaining);
+            
+            // Update status
+            statusEl.className = 'status ' + info.session.type;
+            if (info.session.type === 'work') {
+                statusEl.textContent = 'Work Session';
+            } else if (info.session.type === 'break') {
+                statusEl.textContent = 'Short Break';
+            } else {
+                statusEl.textContent = 'Long Break (Lunch Time!)';
+            }
+            
+            // Update page title
+            document.title = `${formatTime(info.remaining)} - ${statusEl.textContent}`;
+        }
+        
+        // Initialize
+        initializeCycleStartTime();
+        updateDisplay();
+        
+        // Update every second
+        setInterval(updateDisplay, 1000);
+    </script>
+</body>
+</html>
