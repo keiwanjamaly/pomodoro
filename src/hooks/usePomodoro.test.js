@@ -4,7 +4,7 @@ import { usePomodoro } from './usePomodoro';
 
 describe('usePomodoro', () => {
     const mockPlay = vi.fn().mockResolvedValue(undefined);
-    global.Audio = vi.fn().mockImplementation(function() {
+    global.Audio = vi.fn().mockImplementation(function () {
         return {
             play: mockPlay,
         };
@@ -79,7 +79,7 @@ describe('usePomodoro', () => {
 
     it('should generate sessions up to the end of the day', () => {
         const { result } = renderHook(() => usePomodoro());
-        
+
         // Wait for sessions to be generated
         act(() => {
             vi.advanceTimersByTime(0);
@@ -103,6 +103,24 @@ describe('usePomodoro', () => {
         });
 
         expect(result.current.statusLabel).toBe('Fokus 🚀 (3/4)');
+    });
+
+    it('should parse time parameter with seconds from URL', () => {
+        const date = new Date(2024, 0, 1, 10, 0, 0);
+        vi.setSystemTime(date);
+
+        // Mock URL search params
+        const originalLocation = window.location;
+        delete window.location;
+        window.location = { ...originalLocation, search: '?time=12:59:55' };
+
+        const { result } = renderHook(() => usePomodoro());
+
+        expect(result.current.isDebug).toBe(true);
+        expect(result.current.debugTime).toBe('12:59:55');
+
+        // Restore window.location
+        window.location = originalLocation;
     });
 
     it('should play a sound when transitioning from work to break', () => {

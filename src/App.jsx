@@ -6,6 +6,7 @@ import Timeline from './components/Timeline';
 import ProgressBar from './components/ProgressBar';
 import GlassCard from './components/GlassCard';
 import './index.css';
+import './components/SoundToggle.css';
 
 function App() {
   const {
@@ -16,7 +17,9 @@ function App() {
     sessions,
     isDebug,
     debugTime,
-    timeOffset
+    timeOffset,
+    isSoundEnabled,
+    setIsSoundEnabled
   } = usePomodoro();
 
   // Update body background color
@@ -24,8 +27,28 @@ function App() {
     document.body.style.backgroundColor = bgColor;
   }, [bgColor]);
 
+  const toggleSound = () => {
+    if (!isSoundEnabled) {
+      // Unlock audio context on user interaction
+      const baseUrl = import.meta.env.BASE_URL;
+      const audioPath = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}notification.mp3`;
+      const audio = new Audio(audioPath);
+      audio.volume = 0; // Play silently to unlock
+      audio.play().catch(() => { });
+    }
+    setIsSoundEnabled(!isSoundEnabled);
+  };
+
   return (
     <>
+      <button
+        className="sound-toggle"
+        onClick={toggleSound}
+        aria-label={isSoundEnabled ? "Mute sound" : "Enable sound"}
+      >
+        {isSoundEnabled ? '🔊' : '🔇'}
+      </button>
+
       {isDebug && (
         <div id="debug-badge" className="debug-badge" style={{ display: 'block' }}>
           Sim: {debugTime}
