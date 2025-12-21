@@ -47,7 +47,24 @@ A vibrant, focus-enhancing Pomodoro timer built with React and Vite. Stay in the
 - `npm run test`: Run the test suite with Vitest.
 - `npm run lint`: Run ESLint to check for code quality.
 
-## 🧩 Project Structure
+## � AI Code Review
+
+This project includes an automated AI code review workflow powered by Gemini. It checks for:
+- README completeness
+- Code quality and best practices
+- Test coverage
+
+### Setup
+
+To enable the AI review on your fork:
+1. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/).
+2. Go to your repository settings on GitHub.
+3. Navigate to **Secrets and variables** > **Actions**.
+4. Create a new repository secret named `GEMINI_API_KEY` and paste your API key.
+
+The workflow will automatically run on every push and pull request.
+
+## �🧩 Project Structure
 
 ```
 src/
