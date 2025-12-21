@@ -1,183 +1,458 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pomodoro Timer</title>
+    <title>Pomodoro Focus</title>
+    <meta name="description" content="Minimalistischer Always-On Pomodoro Timer">
     <style>
+        :root {
+            /* Farben für die verschiedenen Zustände */
+            --color-focus: #e74c3c;
+            /* Rot für Arbeit */
+            --color-break: #2ecc71;
+            /* Grün für Pause */
+            --color-lunch: #3498db;
+            /* Blau für Mittag */
+            --color-text: #ffffff;
+            --font-stack: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: var(--font-stack);
+            background-color: #222;
+            /* Fallback */
+            color: var(--color-text);
+            height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
+            transition: background-color 0.6s ease;
+            overflow: hidden;
         }
-        .container {
+
+        /* Hauptcontainer für den Timer */
+        .timer-container {
             text-align: center;
-            padding: 40px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
         }
-        .timer {
-            font-size: 72px;
-            font-weight: bold;
-            margin: 20px 0;
+
+        /* Die Zeitanzeige - Responsive Größe */
+        .time-display {
+            font-size: clamp(4rem, 25vw, 15rem);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            /* Verhindert das "Wackeln" der Zahlen */
+            line-height: 1;
+            letter-spacing: -0.05em;
         }
-        .status {
-            font-size: 24px;
-            margin: 10px 0;
+
+        /* Status Label (FOKUS / PAUSE / MITTAG) */
+        .status-label {
+            font-size: clamp(1rem, 4vw, 3rem);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            opacity: 0.9;
+            margin-top: 1rem;
+            font-weight: 300;
         }
-        .work {
-            color: #e74c3c;
+
+        /* Timeline Container */
+        .timeline {
+            display: flex;
+            gap: 6px;
+            margin-top: 4vh;
+            margin-bottom: 4vh;
+            padding: 0 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90vw;
         }
-        .break {
-            color: #27ae60;
+
+        /* Einzelner Session-Balken */
+        .session-pill {
+            width: 8px;
+            height: 25px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
         }
-        .long-break {
-            color: #3498db;
+
+        /* Zustände der Balken */
+        .session-pill.past {
+            background-color: rgba(255, 255, 255, 0.5);
+            height: 25px;
         }
-        .info {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-top: 20px;
+
+        .session-pill.active {
+            background-color: #fff;
+            height: 45px;
+            width: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+            transform: translateY(-5px);
+        }
+
+        .session-pill.lunch {
+            background-color: var(--color-lunch);
+            width: 25px;
+            /* Breiter für Mittag */
+            opacity: 0.4;
+        }
+
+        .session-pill.lunch.active {
+            opacity: 1;
+            box-shadow: 0 0 15px var(--color-lunch);
+        }
+
+        .session-pill.lunch.past {
+            opacity: 0.7;
+        }
+
+        /* Tooltip beim Hovern */
+        .session-pill::after {
+            content: attr(data-info);
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            font-family: sans-serif;
+            font-weight: 500;
+        }
+
+        .session-pill:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Hinweis auf Simulations-Modus */
+        .debug-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            display: none;
+            /* Standardmäßig versteckt */
+        }
+
+        /* Fortschrittsbalken am unteren Rand */
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            width: 0%;
+            transition: width 1s linear;
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <h1>Pomodoro Timer</h1>
-        <div class="timer" id="timer">25:00</div>
-        <div class="status" id="status">Work Session</div>
-        <div class="info" id="info">Next long break at 13:00</div>
-    </div>
+
+    <div id="debug-badge" class="debug-badge">Simulation Mode ⏱️</div>
+
+    <main class="timer-container">
+        <div id="time" class="time-display">00:00</div>
+        <div id="status" class="status-label">Laden...</div>
+
+        <!-- Neue Timeline Übersicht -->
+        <div id="timeline" class="timeline"></div>
+    </main>
+
+    <div id="progress" class="progress-bar"></div>
 
     <script>
-        // Pomodoro cycle: 25-5-25-5-25-5-25-5-20 (in minutes)
-        const POMODORO_CYCLE = [
-            { duration: 25, type: 'work' },
-            { duration: 5, type: 'break' },
-            { duration: 25, type: 'work' },
-            { duration: 5, type: 'break' },
-            { duration: 25, type: 'work' },
-            { duration: 5, type: 'break' },
-            { duration: 25, type: 'work' },
-            { duration: 5, type: 'break' },
-            { duration: 20, type: 'long-break' }
-        ];
-        
-        // Total cycle duration in milliseconds
-        const CYCLE_DURATION_MS = POMODORO_CYCLE.reduce((sum, session) => sum + session.duration * 60 * 1000, 0);
-        
-        // Time before long break starts (all sessions except the long break)
-        const TIME_BEFORE_LONG_BREAK_MS = POMODORO_CYCLE.slice(0, -1).reduce((sum, s) => sum + s.duration * 60 * 1000, 0);
-        
-        // Target time for long break to start (13:00 in local time)
-        const LONG_BREAK_TARGET_HOUR = 13;
-        const LONG_BREAK_TARGET_MINUTE = 0;
-        
-        let cycleStartTime;
-        
-        function initializeCycleStartTime() {
-            const now = new Date();
-            
-            // Find today's 13:00
-            const today13 = new Date(now);
-            today13.setHours(LONG_BREAK_TARGET_HOUR, LONG_BREAK_TARGET_MINUTE, 0, 0);
-            
-            // Calculate today's cycle start (when long break would start at 13:00)
-            let todayCycleStart = new Date(today13.getTime() - TIME_BEFORE_LONG_BREAK_MS);
-            let todayCycleEnd = new Date(todayCycleStart.getTime() + CYCLE_DURATION_MS);
-            
-            // Determine which cycle we're in
-            if (now >= todayCycleStart && now < todayCycleEnd) {
-                // We're in today's cycle
-                cycleStartTime = todayCycleStart;
-            } else if (now < todayCycleStart) {
-                // We're before today's cycle, use yesterday's
-                let yesterday13 = new Date(today13);
-                yesterday13.setDate(yesterday13.getDate() - 1);
-                cycleStartTime = new Date(yesterday13.getTime() - TIME_BEFORE_LONG_BREAK_MS);
-            } else {
-                // We're after today's cycle, use tomorrow's
-                let tomorrow13 = new Date(today13);
-                tomorrow13.setDate(tomorrow13.getDate() + 1);
-                cycleStartTime = new Date(tomorrow13.getTime() - TIME_BEFORE_LONG_BREAK_MS);
-            }
-        }
-        
-        function getCurrentSessionInfo() {
-            const now = Date.now();
-            const timeSinceCycleStart = now - cycleStartTime.getTime();
-            
-            // Calculate position in the current cycle
-            // Since initializeCycleStartTime ensures cycleStartTime is always in the past,
-            // timeSinceCycleStart should always be positive
-            const positionInCycle = timeSinceCycleStart % CYCLE_DURATION_MS;
-            
-            let elapsed = 0;
-            for (let i = 0; i < POMODORO_CYCLE.length; i++) {
-                const session = POMODORO_CYCLE[i];
-                const sessionDuration = session.duration * 60 * 1000;
-                
-                if (positionInCycle < elapsed + sessionDuration) {
-                    const timeInSession = positionInCycle - elapsed;
-                    const remainingTime = sessionDuration - timeInSession;
-                    
-                    return {
-                        session: session,
-                        sessionIndex: i,
-                        remaining: remainingTime
-                    };
+        const PomodoroApp = {
+            elements: {
+                time: document.getElementById('time'),
+                status: document.getElementById('status'),
+                body: document.body,
+                progress: document.getElementById('progress'),
+                debugBadge: document.getElementById('debug-badge'),
+                timeline: document.getElementById('timeline')
+            },
+
+            // Konfiguration
+            config: {
+                workDuration: 25, // Minuten
+                lunchHour: 13,    // 13:00 Uhr
+                lunchDuration: 25, // Minuten (Die "lange Pause")
+                startHour: 7,      // Timeline Start
+                endHour: 19        // Timeline Ende
+            },
+
+            timeOffset: 0,
+            sessions: [], // Speichert die generierten Sessions für die Timeline
+            currentSessionIndex: -1, // Index der aktuellen Session
+
+            init() {
+                this.checkForDebugTime();
+                this.generateTimelineSessions();
+                this.renderTimeline();
+                this.updateTimer();
+                setInterval(() => this.updateTimer(), 1000);
+            },
+
+            checkForDebugTime() {
+                const params = new URLSearchParams(window.location.search);
+                const debugTime = params.get('time');
+                if (debugTime) {
+                    const [h, m] = debugTime.split(':').map(Number);
+                    if (!isNaN(h) && !isNaN(m)) {
+                        const now = new Date();
+                        const targetDate = new Date();
+                        targetDate.setHours(h, m, 0, 0);
+                        this.timeOffset = targetDate.getTime() - now.getTime();
+                        this.elements.debugBadge.style.display = 'block';
+                        this.elements.debugBadge.textContent = `Sim: ${h}:${m}`;
+                    }
                 }
-                
-                elapsed += sessionDuration;
+            },
+
+            // Berechnet alle Sessions für den Tag vor
+            generateTimelineSessions() {
+                this.sessions = [];
+
+                // Wir iterieren durch die Stunden des Tages
+                for (let h = this.config.startHour; h < this.config.endHour; h++) {
+                    // Sonderfall 13 Uhr
+                    if (h === 13) {
+                        // 13:00 Mittagspause
+                        this.sessions.push({
+                            startH: 13, startM: 0,
+                            duration: 25,
+                            type: 'lunch',
+                            label: 'Mittagspause'
+                        });
+                        // 13:25 Work
+                        this.sessions.push({
+                            startH: 13, startM: 25,
+                            duration: 25,
+                            type: 'work',
+                            label: 'Fokus'
+                        });
+                        // 13:55 Work
+                        this.sessions.push({
+                            startH: 13, startM: 55,
+                            duration: 25,
+                            type: 'work',
+                            label: 'Fokus'
+                        });
+                    }
+                    // Vormittag (Starts xx:05, xx:35)
+                    else if (h < 13) {
+                        this.sessions.push({
+                            startH: h, startM: 5,
+                            duration: 25,
+                            type: 'work',
+                            label: 'Fokus'
+                        });
+                        this.sessions.push({
+                            startH: h, startM: 35,
+                            duration: 25,
+                            type: 'work',
+                            label: 'Fokus'
+                        });
+                    }
+                    // Nachmittag (Starts xx:25, xx:55)
+                    else {
+                        this.sessions.push({
+                            startH: h, startM: 25,
+                            duration: 25,
+                            type: 'work',
+                            label: 'Fokus'
+                        });
+                        this.sessions.push({
+                            startH: h, startM: 55,
+                            duration: 25,
+                            type: 'work',
+                            label: 'Fokus'
+                        });
+                    }
+                }
+            },
+
+            renderTimeline() {
+                this.elements.timeline.innerHTML = '';
+                this.sessions.forEach((session, index) => {
+                    const el = document.createElement('div');
+                    el.className = `session-pill ${session.type}`;
+
+                    // Berechne Endzeit für Tooltip
+                    const endM = session.startM + session.duration;
+                    const endH = session.startH + Math.floor(endM / 60);
+                    const displayEndM = endM % 60;
+
+                    const timeStr = `${session.startH}:${session.startM.toString().padStart(2, '0')} - ${endH}:${displayEndM.toString().padStart(2, '0')}`;
+                    el.dataset.info = `${session.label} (${timeStr})`;
+                    el.id = `session-${index}`;
+
+                    this.elements.timeline.appendChild(el);
+                });
+            },
+
+            updateTimelineActiveState(currentH, currentM) {
+                const nowMinutes = currentH * 60 + currentM;
+
+                let activeFound = false;
+                this.currentSessionIndex = -1;
+
+                this.sessions.forEach((session, index) => {
+                    const el = document.getElementById(`session-${index}`);
+                    const sessionStart = session.startH * 60 + session.startM;
+                    const sessionEnd = sessionStart + session.duration; // Work duration
+                    const breakEnd = sessionEnd + (session.type === 'lunch' ? 0 : 5); // Break duration (ca. 5 min, Mittag ist Sonderfall)
+
+                    // Reset classes
+                    el.classList.remove('active', 'past');
+
+                    // Check Logic
+                    if (nowMinutes >= sessionEnd) {
+                        // Session komplett vorbei
+                        el.classList.add('past');
+                    } else if (nowMinutes >= sessionStart && nowMinutes < sessionEnd) {
+                        // Gerade in Arbeit
+                        el.classList.add('active');
+                        activeFound = true;
+                        this.currentSessionIndex = index;
+                    } else if (nowMinutes >= sessionEnd && nowMinutes < breakEnd) {
+                        // Gerade in Pause NACH dieser Session -> Wir lassen den Balken noch aktiv, aber vielleicht anders?
+                        // Für Minimalismus lassen wir ihn "active" oder "past". 
+                        // "Past" ist logischer, weil Arbeit vorbei ist.
+                        el.classList.add('past');
+                    }
+                });
+            },
+
+            updateTimer() {
+                const now = new Date(Date.now() + this.timeOffset);
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+
+                // Update Timeline UI
+                this.updateTimelineActiveState(hours, minutes);
+
+                let state = '';
+                let secondsRemaining = 0;
+                let totalDurationSeconds = 0;
+
+                // --- 1. SONDERFALL: MITTAGSPAUSE (13:00 - 13:25) ---
+                const isLunchTime = (hours === this.config.lunchHour && minutes < this.config.lunchDuration);
+
+                if (isLunchTime) {
+                    state = 'lunch';
+                    // Ziel: 13:25 Uhr
+                    const endOfLunch = new Date(now);
+                    endOfLunch.setHours(this.config.lunchHour, this.config.lunchDuration, 0, 0);
+                    secondsRemaining = Math.floor((endOfLunch - now) / 1000);
+                    totalDurationSeconds = this.config.lunchDuration * 60;
+                }
+                else {
+                    // --- 2. STANDARD ZYKLUS ---
+                    let startOffset = 0;
+                    if (hours < 13) {
+                        startOffset = 5; // Vormittag
+                    } else {
+                        startOffset = 25; // Nachmittag
+                    }
+
+                    // Berechne die aktuelle Minute im 30er-Block (0..29)
+                    const minuteInBlock = (minutes - startOffset + 60) % 30;
+                    const secondsInBlock = (minuteInBlock * 60) + seconds;
+
+                    if (minuteInBlock < this.config.workDuration) {
+                        // FOKUS PHASE
+                        state = 'work';
+                        const workSeconds = this.config.workDuration * 60;
+                        secondsRemaining = workSeconds - secondsInBlock;
+                        totalDurationSeconds = workSeconds;
+                    } else {
+                        // PAUSEN PHASE
+                        state = 'break';
+                        const cycleSeconds = 30 * 60;
+                        secondsRemaining = cycleSeconds - secondsInBlock;
+                        totalDurationSeconds = (30 - this.config.workDuration) * 60;
+                    }
+                }
+
+                this.render(state, secondsRemaining, totalDurationSeconds);
+            },
+
+            render(state, remaining, total) {
+                const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+                const s = (remaining % 60).toString().padStart(2, '0');
+                const timeString = `${m}:${s}`;
+
+                let labelText = '';
+                let bgColor = '';
+
+                switch (state) {
+                    case 'lunch':
+                        labelText = 'Mittagspause 🍱';
+                        bgColor = 'var(--color-lunch)';
+                        break;
+                    case 'break':
+                        labelText = 'Pause ☕';
+                        bgColor = 'var(--color-break)';
+                        break;
+                    case 'work':
+                    default:
+                        labelText = 'Fokus 🚀';
+                        if (this.currentSessionIndex !== -1) {
+                            let workCount = 0;
+                            for (let i = 0; i <= this.currentSessionIndex; i++) {
+                                if (this.sessions[i].type === 'work') {
+                                    workCount++;
+                                }
+                            }
+                            const cyclePos = ((workCount - 1) % 4) + 1;
+                            labelText += ` (${cyclePos}/4)`;
+                        }
+                        bgColor = 'var(--color-focus)';
+                        break;
+                }
+
+                this.elements.time.textContent = timeString;
+                this.elements.status.textContent = labelText;
+                this.elements.body.style.backgroundColor = bgColor;
+                document.title = `${timeString} - ${labelText}`;
+
+                const progressPercent = 100 - ((remaining / total) * 100);
+                this.elements.progress.style.width = `${progressPercent}%`;
             }
-            
-            // Shouldn't reach here, but default to first session
-            return {
-                session: POMODORO_CYCLE[0],
-                sessionIndex: 0,
-                remaining: POMODORO_CYCLE[0].duration * 60 * 1000
-            };
-        }
-        
-        function formatTime(milliseconds) {
-            const totalSeconds = Math.floor(milliseconds / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
-        function updateDisplay() {
-            const info = getCurrentSessionInfo();
-            const timerEl = document.getElementById('timer');
-            const statusEl = document.getElementById('status');
-            
-            timerEl.textContent = formatTime(info.remaining);
-            
-            // Update status
-            statusEl.className = 'status ' + info.session.type;
-            if (info.session.type === 'work') {
-                statusEl.textContent = 'Work Session';
-            } else if (info.session.type === 'break') {
-                statusEl.textContent = 'Short Break';
-            } else {
-                statusEl.textContent = 'Long Break (Lunch Time!)';
-            }
-            
-            // Update page title
-            document.title = `${formatTime(info.remaining)} - ${statusEl.textContent}`;
-        }
-        
-        // Initialize
-        initializeCycleStartTime();
-        updateDisplay();
-        
-        // Update every second
-        setInterval(updateDisplay, 1000);
+        };
+
+        PomodoroApp.init();
     </script>
 </body>
+
 </html>
