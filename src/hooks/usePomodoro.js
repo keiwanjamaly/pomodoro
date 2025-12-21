@@ -33,6 +33,21 @@ export const usePomodoro = () => {
     const [currentSessionIndex, setCurrentSessionIndex] = useState(-1);
     const [isSoundEnabled, setIsSoundEnabled] = useState(false);
     const previousStateRef = useRef(null);
+    const audioRef = useRef(null);
+    const workerRef = useRef(null);
+    const isSoundEnabledRef = useRef(isSoundEnabled);
+
+    // Update ref when state changes
+    useEffect(() => {
+        isSoundEnabledRef.current = isSoundEnabled;
+    }, [isSoundEnabled]);
+
+    // Initialize Audio
+    useEffect(() => {
+        const baseUrl = import.meta.env.BASE_URL;
+        const audioPath = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}notification.mp3`;
+        audioRef.current = new Audio(audioPath);
+    }, []);
 
     const [initialDebugState] = useState(() => {
         if (typeof window === 'undefined') return { offset: 0, isDebug: false, debugTime: '' };
@@ -75,6 +90,9 @@ export const usePomodoro = () => {
 
     // Update timer logic
     useEffect(() => {
+        // Initialize worker
+        workerRef.current = new Worker(new URL('../workers/timerWorker.js', import.meta.url));
+
         const updateTimer = () => {
             const now = new Date(Date.now() + timeOffset);
             const hours = now.getHours();
@@ -131,10 +149,8 @@ export const usePomodoro = () => {
             }
             // Sound Logic
             if (previousStateRef.current && previousStateRef.current !== state) {
-                if (isSoundEnabled) {
-                    const baseUrl = import.meta.env.BASE_URL;
-                    const audioPath = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}notification.mp3`;
-                    new Audio(audioPath).play().catch(e => console.error('Error playing sound:', e));
+                if (isSoundEnabledRef.current && audioRef.current) {
+                    audioRef.current.play().catch(e => console.error('Error playing sound:', e));
                 }
             }
             previousStateRef.current = state;
@@ -181,11 +197,20 @@ export const usePomodoro = () => {
             setProgress(progressPercent);
         };
 
-        const intervalId = setInterval(updateTimer, 1000);
+        workerRef.current.onmessage = (e) => {
+            if (e.data === 'tick') {
+                updateTimer();
+            }
+        };
+
+        workerRef.current.postMessage('start');
         updateTimer(); // Initial call
 
-        return () => clearInterval(intervalId);
-    }, [timeOffset, sessions, isSoundEnabled]);
+        return () => {
+            workerRef.current.postMessage('stop');
+            workerRef.current.terminate();
+        };
+    }, [timeOffset, sessions]);
 
     // Document title update
     useEffect(() => {

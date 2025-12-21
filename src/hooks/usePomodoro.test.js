@@ -107,17 +107,18 @@ describe('usePomodoro', () => {
         vi.setSystemTime(date);
 
         // Mock URL search params
-        const originalLocation = window.location;
-        delete window.location;
-        window.location = { ...originalLocation, search: '?time=12:59:55' };
+        const url = new URL(window.location.href);
+        url.searchParams.set('time', '12:59:55');
+        window.history.replaceState({}, '', url.toString());
 
         const { result } = renderHook(() => usePomodoro());
 
         expect(result.current.isDebug).toBe(true);
         expect(result.current.debugTime).toBe('12:59:55');
 
-        // Restore window.location
-        window.location = originalLocation;
+        // Reset
+        url.searchParams.delete('time');
+        window.history.replaceState({}, '', url.toString());
     });
 
     it('should play a sound when transitioning from work to break if sound is enabled', () => {
