@@ -3,8 +3,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { usePomodoro } from './usePomodoro';
 
 describe('usePomodoro', () => {
+    const mockPlay = vi.fn().mockResolvedValue(undefined);
+    global.Audio = vi.fn().mockImplementation(function() {
+        return {
+            play: mockPlay,
+        };
+    });
+
     beforeEach(() => {
         vi.useFakeTimers();
+        mockPlay.mockClear();
     });
 
     afterEach(() => {
@@ -95,5 +103,38 @@ describe('usePomodoro', () => {
         });
 
         expect(result.current.statusLabel).toBe('Fokus 🚀 (3/4)');
+    });
+
+    it('should play a sound when transitioning from work to break', () => {
+        // 14:05 starts work. 14:30 ends work (25 mins).
+        // Set time to 14:29:59
+        const date = new Date(2024, 0, 1, 14, 29, 59);
+        vi.setSystemTime(date);
+
+        const { result } = renderHook(() => usePomodoro());
+
+        // Initial render, state is work.
+        // Advance 2 seconds to 14:30:01
+        act(() => {
+            vi.advanceTimersByTime(2000);
+        });
+
+        expect(mockPlay).toHaveBeenCalled();
+    });
+
+    it('should play a sound when transitioning from break to work', () => {
+        // 14:30 starts break. 14:35 ends break (5 mins).
+        // Set time to 14:34:59
+        const date = new Date(2024, 0, 1, 14, 34, 59);
+        vi.setSystemTime(date);
+
+        const { result } = renderHook(() => usePomodoro());
+
+        // Advance 2 seconds to 14:35:01
+        act(() => {
+            vi.advanceTimersByTime(2000);
+        });
+
+        expect(mockPlay).toHaveBeenCalled();
     });
 });
