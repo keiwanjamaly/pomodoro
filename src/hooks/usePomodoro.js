@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 const CONFIG = {
     workDuration: 25, // Minutes
@@ -8,30 +8,29 @@ const CONFIG = {
     endHour: 24        // Timeline End
 };
 
+const generateSessions = () => {
+    const newSessions = [];
+    for (let h = CONFIG.startHour; h < CONFIG.endHour; h++) {
+        if (h === 13) {
+            newSessions.push({ startH: 13, startM: 0, duration: 60, type: 'lunch', label: 'Mittagspause' });
+        } else {
+            newSessions.push({ startH: h, startM: 5, duration: 25, type: 'work', label: 'Fokus' });
+            newSessions.push({ startH: h, startM: 35, duration: 25, type: 'work', label: 'Fokus' });
+        }
+    }
+    return newSessions;
+};
+
 export const usePomodoro = () => {
     const [timeString, setTimeString] = useState('00:00');
     const [statusLabel, setStatusLabel] = useState('Laden...');
     const [bgColor, setBgColor] = useState('#222');
     const [progress, setProgress] = useState(0);
-    const [sessions, setSessions] = useState([]);
+    const [sessions] = useState(generateSessions);
     const [currentSessionIndex, setCurrentSessionIndex] = useState(-1);
     const [timeOffset, setTimeOffset] = useState(0);
     const [isDebug, setIsDebug] = useState(false);
     const [debugTime, setDebugTime] = useState('');
-
-    // Generate sessions
-    const generateTimelineSessions = useCallback(() => {
-        const newSessions = [];
-        for (let h = CONFIG.startHour; h < CONFIG.endHour; h++) {
-            if (h === 13) {
-                newSessions.push({ startH: 13, startM: 0, duration: 60, type: 'lunch', label: 'Mittagspause' });
-            } else {
-                newSessions.push({ startH: h, startM: 5, duration: 25, type: 'work', label: 'Fokus' });
-                newSessions.push({ startH: h, startM: 35, duration: 25, type: 'work', label: 'Fokus' });
-            }
-        }
-        setSessions(newSessions);
-    }, []);
 
     // Check for debug time in URL
     useEffect(() => {
@@ -48,8 +47,7 @@ export const usePomodoro = () => {
                 setDebugTime(`${h}:${m}`);
             }
         }
-        generateTimelineSessions();
-    }, [generateTimelineSessions]);
+    }, []);
 
     // Update timer logic
     useEffect(() => {
