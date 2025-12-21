@@ -68,4 +68,32 @@ describe('usePomodoro', () => {
 
         expect(result.current.statusLabel).toBe('Fokus 🚀 (3/4)');
     });
+
+    it('should generate sessions up to the end of the day', () => {
+        const { result } = renderHook(() => usePomodoro());
+        
+        // Wait for sessions to be generated
+        act(() => {
+            vi.advanceTimersByTime(0);
+        });
+
+        const sessions = result.current.sessions;
+        expect(sessions.length).toBeGreaterThan(0);
+        const lastSession = sessions[sessions.length - 1];
+        // Last session should be at 23:35
+        expect(lastSession.startH).toBe(23);
+    });
+
+    it('should show correct status at 21:15', () => {
+        const date = new Date(2024, 0, 1, 21, 15, 0);
+        vi.setSystemTime(date);
+
+        const { result } = renderHook(() => usePomodoro());
+
+        act(() => {
+            vi.advanceTimersByTime(1000);
+        });
+
+        expect(result.current.statusLabel).toBe('Fokus 🚀 (3/4)');
+    });
 });
