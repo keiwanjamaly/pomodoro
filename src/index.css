@@ -1,0 +1,164 @@
+:root {
+  /* Farben für die verschiedenen Zustände */
+  --color-focus: #e74c3c;
+  /* Rot für Arbeit */
+  --color-break: #2ecc71;
+  /* Grün für Pause */
+  --color-lunch: #3498db;
+  /* Blau für Mittag */
+  --color-text: #ffffff;
+  --font-stack: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-stack);
+  background-color: #222;
+  /* Fallback */
+  color: var(--color-text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.6s ease;
+  overflow: hidden;
+}
+
+/* Hauptcontainer für den Timer */
+.timer-container {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+/* Die Zeitanzeige - Responsive Größe */
+.time-display {
+  font-size: clamp(4rem, 25vw, 15rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  /* Verhindert das "Wackeln" der Zahlen */
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+/* Status Label (FOKUS / PAUSE / MITTAG) */
+.status-label {
+  font-size: clamp(1rem, 4vw, 3rem);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  opacity: 0.9;
+  margin-top: 1rem;
+  font-weight: 300;
+}
+
+/* Timeline Container */
+.timeline {
+  display: flex;
+  gap: 6px;
+  margin-top: 4vh;
+  margin-bottom: 4vh;
+  padding: 0 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 90vw;
+}
+
+/* Einzelner Session-Balken */
+.session-pill {
+  width: 8px;
+  height: 25px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+}
+
+/* Zustände der Balken */
+.session-pill.past {
+  background-color: rgba(255, 255, 255, 0.5);
+  height: 25px;
+}
+
+.session-pill.active {
+  background-color: #fff;
+  height: 45px;
+  width: 10px;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+  transform: translateY(-5px);
+}
+
+.session-pill.lunch {
+  background-color: var(--color-lunch);
+  width: 25px;
+  /* Breiter für Mittag */
+  opacity: 0.4;
+}
+
+.session-pill.lunch.active {
+  opacity: 1;
+  box-shadow: 0 0 15px var(--color-lunch);
+}
+
+.session-pill.lunch.past {
+  opacity: 0.7;
+}
+
+/* Tooltip beim Hovern */
+.session-pill::after {
+  content: attr(data-info);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  font-family: sans-serif;
+  font-weight: 500;
+}
+
+.session-pill:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Hinweis auf Simulations-Modus */
+.debug-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  /* display: none;  Handled by React */
+}
+
+/* Fortschrittsbalken am unteren Rand */
+.progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.3);
+  width: 0%;
+  transition: width 1s linear;
+}
