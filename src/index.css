@@ -200,8 +200,10 @@ body {
 @media (max-width: 600px) {
   .timer-container {
     padding: 10px;
-    justify-content: flex-start; /* Align to top on small screens to avoid centering issues if content is tall */
-    padding-top: 60px; /* Space for sound toggle */
+    justify-content: flex-start;
+    /* Align to top on small screens to avoid centering issues if content is tall */
+    padding-top: 60px;
+    /* Space for sound toggle */
   }
 
   .time-display {
@@ -211,7 +213,7 @@ body {
   .status-label {
     font-size: 1rem;
   }
-  
+
   .timeline-card {
     margin-top: 1rem;
   }
