@@ -31,6 +31,7 @@ export const usePomodoro = () => {
     const [timeOffset, setTimeOffset] = useState(0);
     const [isDebug, setIsDebug] = useState(false);
     const [debugTime, setDebugTime] = useState('');
+    const [isSoundEnabled, setIsSoundEnabled] = useState(false);
     const previousStateRef = useRef(null);
 
     // Check for debug time in URL
@@ -38,14 +39,17 @@ export const usePomodoro = () => {
         const params = new URLSearchParams(window.location.search);
         const debugTimeParam = params.get('time');
         if (debugTimeParam) {
-            const [h, m] = debugTimeParam.split(':').map(Number);
-            if (!isNaN(h) && !isNaN(m)) {
-                const now = new Date();
-                const targetDate = new Date();
-                targetDate.setHours(h, m, 0, 0);
-                setTimeOffset(targetDate.getTime() - now.getTime());
-                setIsDebug(true);
-                setDebugTime(`${h}:${m}`);
+            const parts = debugTimeParam.split(':').map(Number);
+            if (parts.length >= 2) {
+                const [h, m, s = 0] = parts;
+                if (!isNaN(h) && !isNaN(m) && !isNaN(s)) {
+                    const now = new Date();
+                    const targetDate = new Date();
+                    targetDate.setHours(h, m, s, 0);
+                    setTimeOffset(targetDate.getTime() - now.getTime());
+                    setIsDebug(true);
+                    setDebugTime(parts.length === 3 ? `${h}:${m}:${s}` : `${h}:${m}`);
+                }
             }
         }
     }, []);
@@ -106,9 +110,10 @@ export const usePomodoro = () => {
                     totalDurationSeconds = (30 - CONFIG.workDuration) * 60;
                 }
             }
-            // Sound Logic
+            // SisSoundEnabled && ound Logic
             if (previousStateRef.current && previousStateRef.current !== state) {
-                const audioPath = `${import.meta.env.BASE_URL}notification.mp3`;
+                const baseUrl = import.meta.env.BASE_URL;
+                const audioPath = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}notification.mp3`;
                 new Audio(audioPath).play().catch(e => console.error('Error playing sound:', e));
             }
             previousStateRef.current = state;
@@ -173,6 +178,8 @@ export const usePomodoro = () => {
         currentSessionIndex,
         isDebug,
         debugTime,
-        timeOffset // Exposed for timeline calculation if needed
+        timeOffset, // Exposed for timeline calculation if needed
+        isSoundEnabled,
+        setIsSoundEnabled
     };
 };
