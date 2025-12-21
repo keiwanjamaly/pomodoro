@@ -22,14 +22,14 @@ body {
   font-family: var(--font-stack);
   background-color: #222;
   /* Fallback */
-  color: var(--color-text);
-  height: 100vh;
+  color: var(--text-color-dynamic, #ffffff);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   transition: background-color 0.6s ease;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* Hauptcontainer für den Timer */
@@ -186,12 +186,35 @@ body {
 
 /* Fortschrittsbalken am unteren Rand */
 .progress-bar {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 0;
   height: 6px;
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--progress-color, rgba(255, 255, 255, 0.5));
   width: 0%;
   transition: width 1s linear;
   box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.3);
+  z-index: 100;
+}
+
+@media (max-width: 600px) {
+  .timer-container {
+    padding: 10px;
+    justify-content: flex-start;
+    /* Align to top on small screens to avoid centering issues if content is tall */
+    padding-top: 60px;
+    /* Space for sound toggle */
+  }
+
+  .time-display {
+    font-size: clamp(3rem, 15vw, 6rem);
+  }
+
+  .status-label {
+    font-size: 1rem;
+  }
+
+  .timeline-card {
+    margin-top: 1rem;
+  }
 }
