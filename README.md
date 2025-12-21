@@ -1,5 +1,7 @@
 # 🍅 Juicy Pomodoro
 
+[**Live Demo**](https://keiwanjamaly.github.io/pomodoro/)
+
 A vibrant, focus-enhancing Pomodoro timer built with React and Vite. Stay in the flow with dynamic colors and a smooth timeline.
 
 ## ✨ Features
