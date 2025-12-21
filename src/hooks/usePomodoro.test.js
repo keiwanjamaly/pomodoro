@@ -31,6 +31,7 @@ describe('usePomodoro', () => {
         });
 
         expect(result.current.statusLabel).toBe('Mittagspause 🍱');
+        expect(result.current.bgColor).toBe('var(--color-lunch)');
     });
 
     it('should show lunch break at 13:59', () => {
@@ -47,11 +48,6 @@ describe('usePomodoro', () => {
     });
 
     it('should start session 1/4 at 14:05', () => {
-        // Assuming the schedule logic:
-        // 7:00 - 13:00 -> 12 sessions (3 full cycles)
-        // 13:00 - 14:00 -> Lunch
-        // 14:05 -> Should be start of next session.
-
         const date = new Date(2024, 0, 1, 14, 5, 0);
         vi.setSystemTime(date);
 
@@ -62,6 +58,7 @@ describe('usePomodoro', () => {
         });
 
         expect(result.current.statusLabel).toBe('Fokus 🚀 (1/4)');
+        expect(result.current.bgColor).toBe('var(--color-focus)');
     });
 
     it('should show correct status at 21:09', () => {
@@ -124,16 +121,15 @@ describe('usePomodoro', () => {
         window.history.replaceState({}, '', url.toString());
     });
 
-    it('should play a sound when transitioning from work to break', () => {
-        // 14:05 starts work. 14:30 ends work (25 mins).
-        // Set time to 14:29:59
+    it('should play a sound when transitioning from work to break if sound is enabled', () => {
         const date = new Date(2024, 0, 1, 14, 29, 59);
         vi.setSystemTime(date);
 
-        const { result } = renderHook(() => usePomodoro()); // eslint-disable-line no-unused-vars
+        const { result } = renderHook(() => usePomodoro());
 
+        // Enable sound
         act(() => {
-            result.current.setIsSoundEnabled(true);
+            result.current.toggleSound();
         });
 
         // Initial render, state is work.
@@ -145,23 +141,92 @@ describe('usePomodoro', () => {
         expect(mockPlay).toHaveBeenCalled();
     });
 
-    it('should play a sound when transitioning from break to work', () => {
-        // 14:30 starts break. 14:35 ends break (5 mins).
-        // Set time to 14:34:59
-        const date = new Date(2024, 0, 1, 14, 34, 59);
+    it('should NOT play a sound when transitioning if sound is disabled', () => {
+        const date = new Date(2024, 0, 1, 14, 29, 59);
         vi.setSystemTime(date);
 
-        const { result } = renderHook(() => usePomodoro()); // eslint-disable-line no-unused-vars
+        renderHook(() => usePomodoro());
 
-        act(() => {
-            result.current.setIsSoundEnabled(true);
-        });
+        // Sound is disabled by default
 
-        // Advance 2 seconds to 14:35:01
+        // Advance 2 seconds to 14:30:01
         act(() => {
             vi.advanceTimersByTime(2000);
         });
 
-        expect(mockPlay).toHaveBeenCalled();
+        expect(mockPlay).not.toHaveBeenCalled();
+    });
+
+    it('should update progress bar correctly', () => {
+        // 14:05 starts work (25 mins).
+        // At 14:05:00, progress should be 0% (or close to it depending on implementation details)
+        // At 14:17:30, progress should be 50%
+        
+        const date = new Date(2024, 0, 1, 14, 17, 30);
+        vi.setSystemTime(date);
+
+        const { result } = renderHook(() => usePomodoro());
+
+        act(() => {
+            vi.advanceTimersByTime(1000);
+        });
+
+        // 12.5 mins passed out of 25 mins = 50%
+        expect(result.current.progress).toBeCloseTo(50, 0);
+    });
+
+    it('should cycle through work positions correctly', () => {
+        // 14:05 -> 1/4
+        // 14:35 -> 2/4
+        // 15:05 -> 3/4
+        // 15:35 -> 4/4
+        // 16:05 -> 1/4
+
+        const checkTime = (hours, minutes, expectedLabel) => {
+            const date = new Date(2024, 0, 1, hours, minutes, 0);
+            vi.setSystemTime(date);
+            const { result } = renderHook(() => usePomodoro());
+            act(() => { vi.advanceTimersByTime(1000); });
+            expect(result.current.statusLabel).toBe(expectedLabel);
+        };
+
+        checkTime(14, 5, 'Fokus 🚀 (1/4)');
+        checkTime(14, 35, 'Fokus 🚀 (2/4)');
+        checkTime(15, 5, 'Fokus 🚀 (3/4)');
+        checkTime(15, 35, 'Fokus 🚀 (4/4)');
+        checkTime(16, 5, 'Fokus 🚀 (1/4)');
+    });
+
+    it('should toggle sound enabled state', () => {
+        const { result } = renderHook(() => usePomodoro());
+
+        expect(result.current.isSoundEnabled).toBe(false);
+
+        act(() => {
+            result.current.toggleSound();
+        });
+
+        expect(result.current.isSoundEnabled).toBe(true);
+
+        act(() => {
+            result.current.toggleSound();
+        });
+
+        expect(result.current.isSoundEnabled).toBe(false);
+    });
+
+    it('should return correct timeString', () => {
+        // 14:05:00 -> 25:00 remaining
+        const date = new Date(2024, 0, 1, 14, 5, 0);
+        vi.setSystemTime(date);
+
+        const { result } = renderHook(() => usePomodoro());
+
+        act(() => {
+            vi.advanceTimersByTime(1000);
+        });
+
+        // 1 second passed, so 24:59
+        expect(result.current.timeString).toBe('24:59');
     });
 });
