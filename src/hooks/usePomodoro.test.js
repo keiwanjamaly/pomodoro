@@ -129,7 +129,7 @@ describe('usePomodoro', () => {
         const date = new Date(2024, 0, 1, 14, 29, 59);
         vi.setSystemTime(date);
 
-        renderHook(() => usePomodoro());
+        const { result } = renderHook(() => usePomodoro()); // eslint-disable-line no-unused-vars
 
         // Initial render, state is work.
         // Advance 2 seconds to 14:30:01
@@ -146,7 +146,7 @@ describe('usePomodoro', () => {
         const date = new Date(2024, 0, 1, 14, 34, 59);
         vi.setSystemTime(date);
 
-        renderHook(() => usePomodoro());
+        const { result } = renderHook(() => usePomodoro()); // eslint-disable-line no-unused-vars
 
         // Advance 2 seconds to 14:35:01
         act(() => {
