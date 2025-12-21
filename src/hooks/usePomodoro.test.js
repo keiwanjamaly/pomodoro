@@ -55,4 +55,17 @@ describe('usePomodoro', () => {
 
         expect(result.current.statusLabel).toBe('Fokus 🚀 (1/4)');
     });
+
+    it('should show correct status at 21:09', () => {
+        const date = new Date(2024, 0, 1, 21, 9, 0);
+        vi.setSystemTime(date);
+
+        const { result } = renderHook(() => usePomodoro());
+
+        act(() => {
+            vi.advanceTimersByTime(1000);
+        });
+
+        expect(result.current.statusLabel).toBe('Fokus 🚀 (3/4)');
+    });
 });

@@ -5,7 +5,7 @@ const CONFIG = {
     lunchHour: 13,    // 13:00
     lunchDuration: 60, // Minutes
     startHour: 7,      // Timeline Start
-    endHour: 19        // Timeline End
+    endHour: 24        // Timeline End
 };
 
 export const usePomodoro = () => {
