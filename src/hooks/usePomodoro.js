@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const CONFIG = {
     workDuration: 25, // Minutes
@@ -20,6 +20,9 @@ const generateSessions = () => {
     }
     return newSessions;
 };
+
+const getNowMinutes = (hours, minutes) => hours * 60 + minutes;
+
 
 export const usePomodoro = () => {
     const [timeString, setTimeString] = useState('00:00');
@@ -58,6 +61,18 @@ export const usePomodoro = () => {
     const [isDebug] = useState(initialDebugState.isDebug);
     const [debugTime] = useState(initialDebugState.debugTime);
 
+    const toggleSound = useCallback(() => {
+        if (!isSoundEnabled) {
+            // Unlock audio context on user interaction
+            const baseUrl = import.meta.env.BASE_URL;
+            const audioPath = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}notification.mp3`;
+            const audio = new Audio(audioPath);
+            audio.volume = 0; // Play silently to unlock
+            audio.play().catch(() => { });
+        }
+        setIsSoundEnabled(prev => !prev);
+    }, [isSoundEnabled]);
+
     // Update timer logic
     useEffect(() => {
         const updateTimer = () => {
@@ -67,7 +82,7 @@ export const usePomodoro = () => {
             const seconds = now.getSeconds();
 
             // Update Timeline Active State Logic
-            const nowMinutes = hours * 60 + minutes;
+            const nowMinutes = getNowMinutes(hours, minutes);
             let activeIndex = -1;
 
             // We need to calculate this to pass it to the view, or handle it in the view.
@@ -114,11 +129,13 @@ export const usePomodoro = () => {
                     totalDurationSeconds = (30 - CONFIG.workDuration) * 60;
                 }
             }
-            // SisSoundEnabled && ound Logic
+            // Sound Logic
             if (previousStateRef.current && previousStateRef.current !== state) {
-                const baseUrl = import.meta.env.BASE_URL;
-                const audioPath = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}notification.mp3`;
-                new Audio(audioPath).play().catch(e => console.error('Error playing sound:', e));
+                if (isSoundEnabled) {
+                    const baseUrl = import.meta.env.BASE_URL;
+                    const audioPath = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}notification.mp3`;
+                    new Audio(audioPath).play().catch(e => console.error('Error playing sound:', e));
+                }
             }
             previousStateRef.current = state;
 
@@ -160,9 +177,6 @@ export const usePomodoro = () => {
             setStatusLabel(label);
             setBgColor(color);
 
-            // Document title update
-            document.title = `${m}:${s} - ${label}`;
-
             const progressPercent = 100 - ((secondsRemaining / totalDurationSeconds) * 100);
             setProgress(progressPercent);
         };
@@ -171,7 +185,12 @@ export const usePomodoro = () => {
         updateTimer(); // Initial call
 
         return () => clearInterval(intervalId);
-    }, [timeOffset, sessions]);
+    }, [timeOffset, sessions, isSoundEnabled]);
+
+    // Document title update
+    useEffect(() => {
+        document.title = `${timeString} - ${statusLabel}`;
+    }, [timeString, statusLabel]);
 
     return {
         timeString,
@@ -184,6 +203,6 @@ export const usePomodoro = () => {
         debugTime,
         timeOffset, // Exposed for timeline calculation if needed
         isSoundEnabled,
-        setIsSoundEnabled
+        toggleSound
     };
 };

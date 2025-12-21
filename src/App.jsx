@@ -19,7 +19,7 @@ function App() {
     debugTime,
     timeOffset,
     isSoundEnabled,
-    setIsSoundEnabled
+    toggleSound
   } = usePomodoro();
 
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -38,18 +38,6 @@ function App() {
       document.documentElement.style.setProperty('--progress-color', 'rgba(255, 255, 255, 0.5)');
     }
   }, [bgColor, isDarkMode]);
-
-  const toggleSound = () => {
-    if (!isSoundEnabled) {
-      // Unlock audio context on user interaction
-      const baseUrl = import.meta.env.BASE_URL;
-      const audioPath = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}notification.mp3`;
-      const audio = new Audio(audioPath);
-      audio.volume = 0; // Play silently to unlock
-      audio.play().catch(() => { });
-    }
-    setIsSoundEnabled(!isSoundEnabled);
-  };
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
