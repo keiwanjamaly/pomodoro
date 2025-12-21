@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 const CONFIG = {
     workDuration: 25, // Minutes
     lunchHour: 13,    // 13:00
-    lunchDuration: 25, // Minutes
+    lunchDuration: 60, // Minutes
     startHour: 7,      // Timeline Start
     endHour: 19        // Timeline End
 };
@@ -24,15 +24,10 @@ export const usePomodoro = () => {
         const newSessions = [];
         for (let h = CONFIG.startHour; h < CONFIG.endHour; h++) {
             if (h === 13) {
-                newSessions.push({ startH: 13, startM: 0, duration: 25, type: 'lunch', label: 'Mittagspause' });
-                newSessions.push({ startH: 13, startM: 25, duration: 25, type: 'work', label: 'Fokus' });
-                newSessions.push({ startH: 13, startM: 55, duration: 25, type: 'work', label: 'Fokus' });
-            } else if (h < 13) {
+                newSessions.push({ startH: 13, startM: 0, duration: 60, type: 'lunch', label: 'Mittagspause' });
+            } else {
                 newSessions.push({ startH: h, startM: 5, duration: 25, type: 'work', label: 'Fokus' });
                 newSessions.push({ startH: h, startM: 35, duration: 25, type: 'work', label: 'Fokus' });
-            } else {
-                newSessions.push({ startH: h, startM: 25, duration: 25, type: 'work', label: 'Fokus' });
-                newSessions.push({ startH: h, startM: 55, duration: 25, type: 'work', label: 'Fokus' });
             }
         }
         setSessions(newSessions);
@@ -95,12 +90,7 @@ export const usePomodoro = () => {
                 secondsRemaining = Math.floor((endOfLunch - now) / 1000);
                 totalDurationSeconds = CONFIG.lunchDuration * 60;
             } else {
-                let startOffset = 0;
-                if (hours < 13) {
-                    startOffset = 5;
-                } else {
-                    startOffset = 25;
-                }
+                let startOffset = 5;
 
                 const minuteInBlock = (minutes - startOffset + 60) % 30;
                 const secondsInBlock = (minuteInBlock * 60) + seconds;
