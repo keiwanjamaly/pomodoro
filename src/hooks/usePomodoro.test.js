@@ -130,7 +130,7 @@ describe('usePomodoro', () => {
         const date = new Date(2024, 0, 1, 14, 29, 59);
         vi.setSystemTime(date);
 
-        const { result } = renderHook(() => usePomodoro());
+        const { result } = renderHook(() => usePomodoro()); // eslint-disable-line no-unused-vars
 
         act(() => {
             result.current.setIsSoundEnabled(true);
@@ -151,7 +151,7 @@ describe('usePomodoro', () => {
         const date = new Date(2024, 0, 1, 14, 34, 59);
         vi.setSystemTime(date);
 
-        const { result } = renderHook(() => usePomodoro());
+        const { result } = renderHook(() => usePomodoro()); // eslint-disable-line no-unused-vars
 
         act(() => {
             result.current.setIsSoundEnabled(true);
