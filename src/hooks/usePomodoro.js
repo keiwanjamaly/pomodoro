@@ -28,14 +28,11 @@ export const usePomodoro = () => {
     const [progress, setProgress] = useState(0);
     const [sessions] = useState(generateSessions);
     const [currentSessionIndex, setCurrentSessionIndex] = useState(-1);
-    const [timeOffset, setTimeOffset] = useState(0);
-    const [isDebug, setIsDebug] = useState(false);
-    const [debugTime, setDebugTime] = useState('');
     const [isSoundEnabled, setIsSoundEnabled] = useState(false);
     const previousStateRef = useRef(null);
 
-    // Check for debug time in URL
-    useEffect(() => {
+    const [initialDebugState] = useState(() => {
+        if (typeof window === 'undefined') return { offset: 0, isDebug: false, debugTime: '' };
         const params = new URLSearchParams(window.location.search);
         const debugTimeParam = params.get('time');
         if (debugTimeParam) {
@@ -46,13 +43,20 @@ export const usePomodoro = () => {
                     const now = new Date();
                     const targetDate = new Date();
                     targetDate.setHours(h, m, s, 0);
-                    setTimeOffset(targetDate.getTime() - now.getTime());
-                    setIsDebug(true);
-                    setDebugTime(parts.length === 3 ? `${h}:${m}:${s}` : `${h}:${m}`);
+                    return {
+                        offset: targetDate.getTime() - now.getTime(),
+                        isDebug: true,
+                        debugTime: parts.length === 3 ? `${h}:${m}:${s}` : `${h}:${m}`
+                    };
                 }
             }
         }
-    }, []);
+        return { offset: 0, isDebug: false, debugTime: '' };
+    });
+
+    const [timeOffset] = useState(initialDebugState.offset);
+    const [isDebug] = useState(initialDebugState.isDebug);
+    const [debugTime] = useState(initialDebugState.debugTime);
 
     // Update timer logic
     useEffect(() => {
