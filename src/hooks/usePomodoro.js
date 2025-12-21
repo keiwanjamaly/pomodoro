@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const CONFIG = {
     workDuration: 25, // Minutes
@@ -31,6 +31,7 @@ export const usePomodoro = () => {
     const [timeOffset, setTimeOffset] = useState(0);
     const [isDebug, setIsDebug] = useState(false);
     const [debugTime, setDebugTime] = useState('');
+    const previousStateRef = useRef(null);
 
     // Check for debug time in URL
     useEffect(() => {
@@ -105,7 +106,13 @@ export const usePomodoro = () => {
                     totalDurationSeconds = (30 - CONFIG.workDuration) * 60;
                 }
             }
+            // Sound Logic
+            if (previousStateRef.current && previousStateRef.current !== state) {
+                new Audio('/notification.mp3').play().catch(e => console.error('Error playing sound:', e));
+            }
+            previousStateRef.current = state;
 
+            // 
             // Render Logic (State Updates)
             const m = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
             const s = (secondsRemaining % 60).toString().padStart(2, '0');
