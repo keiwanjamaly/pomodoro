@@ -23,7 +23,7 @@ A vibrant, focus-enhancing Pomodoro timer built with React and Vite. Stay in the
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/pomodoro.git
+   git clone https://github.com/<your_github_username>/pomodoro.git
    cd pomodoro
    ```
 
@@ -38,6 +38,16 @@ A vibrant, focus-enhancing Pomodoro timer built with React and Vite. Stay in the
    ```
 
 4. Open your browser and navigate to `http://localhost:5173` (or the port shown in your terminal).
+
+## ⚙️ Customization
+
+The Pomodoro timer settings are currently defined in `src/hooks/usePomodoro.js`. You can modify the `CONFIG` object to adjust:
+
+- `workDuration`: Duration of a focus session (default: 25 minutes).
+- `lunchHour`: Start hour of the lunch break (default: 13:00).
+- `lunchDuration`: Duration of the lunch break (default: 60 minutes).
+- `startHour`: Start hour of the timeline (default: 7:00).
+- `endHour`: End hour of the timeline (default: 24:00).
 
 ## 🛠️ Scripts
 
