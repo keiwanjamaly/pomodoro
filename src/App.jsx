@@ -4,6 +4,7 @@ import TimerDisplay from './components/TimerDisplay';
 import StatusLabel from './components/StatusLabel';
 import Timeline from './components/Timeline';
 import ProgressBar from './components/ProgressBar';
+import GlassCard from './components/GlassCard';
 import './index.css';
 
 function App() {
@@ -32,9 +33,14 @@ function App() {
       )}
 
       <main className="timer-container">
-        <TimerDisplay time={timeString} />
-        <StatusLabel label={statusLabel} />
-        <Timeline sessions={sessions} timeOffset={timeOffset} />
+        <GlassCard className="timer-card">
+          <StatusLabel label={statusLabel} />
+          <TimerDisplay time={timeString} />
+        </GlassCard>
+
+        <GlassCard className="timeline-card">
+          <Timeline sessions={sessions} timeOffset={timeOffset} />
+        </GlassCard>
       </main>
 
       <ProgressBar progress={progress} />
