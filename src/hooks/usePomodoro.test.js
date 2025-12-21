@@ -129,7 +129,7 @@ describe('usePomodoro', () => {
         const date = new Date(2024, 0, 1, 14, 29, 59);
         vi.setSystemTime(date);
 
-        const { result } = renderHook(() => usePomodoro());
+        renderHook(() => usePomodoro());
 
         // Initial render, state is work.
         // Advance 2 seconds to 14:30:01
@@ -146,7 +146,7 @@ describe('usePomodoro', () => {
         const date = new Date(2024, 0, 1, 14, 34, 59);
         vi.setSystemTime(date);
 
-        const { result } = renderHook(() => usePomodoro());
+        renderHook(() => usePomodoro());
 
         // Advance 2 seconds to 14:35:01
         act(() => {
