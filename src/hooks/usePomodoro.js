@@ -108,7 +108,8 @@ export const usePomodoro = () => {
             }
             // Sound Logic
             if (previousStateRef.current && previousStateRef.current !== state) {
-                new Audio('/notification.mp3').play().catch(e => console.error('Error playing sound:', e));
+                const audioPath = `${import.meta.env.BASE_URL}notification.mp3`;
+                new Audio(audioPath).play().catch(e => console.error('Error playing sound:', e));
             }
             previousStateRef.current = state;
 
