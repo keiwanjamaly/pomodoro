@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePomodoro } from './hooks/usePomodoro';
 import TimerDisplay from './components/TimerDisplay';
 import StatusLabel from './components/StatusLabel';
@@ -6,7 +6,7 @@ import Timeline from './components/Timeline';
 import ProgressBar from './components/ProgressBar';
 import GlassCard from './components/GlassCard';
 import './index.css';
-import './components/SoundToggle.css';
+import './components/Controls.css';
 
 function App() {
   const {
@@ -22,10 +22,22 @@ function App() {
     setIsSoundEnabled
   } = usePomodoro();
 
-  // Update body background color
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Update body background color and theme
   useEffect(() => {
-    document.body.style.backgroundColor = bgColor;
-  }, [bgColor]);
+    if (isDarkMode) {
+      document.body.style.backgroundColor = '#121212';
+      document.documentElement.style.setProperty('--text-color-dynamic', bgColor);
+      document.documentElement.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.05)');
+      document.documentElement.style.setProperty('--progress-color', bgColor);
+    } else {
+      document.body.style.backgroundColor = bgColor;
+      document.documentElement.style.setProperty('--text-color-dynamic', '#ffffff');
+      document.documentElement.style.setProperty('--glass-bg', 'rgba(255, 255, 255, 0.1)');
+      document.documentElement.style.setProperty('--progress-color', 'rgba(255, 255, 255, 0.5)');
+    }
+  }, [bgColor, isDarkMode]);
 
   const toggleSound = () => {
     if (!isSoundEnabled) {
@@ -39,15 +51,28 @@ function App() {
     setIsSoundEnabled(!isSoundEnabled);
   };
 
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
   return (
     <>
-      <button
-        className="sound-toggle"
-        onClick={toggleSound}
-        aria-label={isSoundEnabled ? "Mute sound" : "Enable sound"}
-      >
-        {isSoundEnabled ? '🔊' : '🔇'}
-      </button>
+      <div className="controls-container">
+        <button
+          className="control-button"
+          onClick={toggleTheme}
+          aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? '☀️' : '🌙'}
+        </button>
+        <button
+          className="control-button"
+          onClick={toggleSound}
+          aria-label={isSoundEnabled ? "Mute sound" : "Enable sound"}
+        >
+          {isSoundEnabled ? '🔊' : '🔇'}
+        </button>
+      </div>
 
       {isDebug && (
         <div id="debug-badge" className="debug-badge" style={{ display: 'block' }}>
