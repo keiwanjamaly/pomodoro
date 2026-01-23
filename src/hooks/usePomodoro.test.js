@@ -62,8 +62,8 @@ describe('usePomodoro', () => {
         expect(result.current.bgColor).toBe('var(--color-focus)');
     });
 
-    it('should show correct status at 21:09 (Long Break)', () => {
-        const date = new Date(2024, 0, 1, 21, 9, 0);
+    it('should show correct status at 20:45 (Long Break)', () => {
+        const date = new Date(2024, 0, 1, 20, 45, 0);
         vi.setSystemTime(date);
 
         const { result } = renderHook(() => usePomodoro());
@@ -90,8 +90,8 @@ describe('usePomodoro', () => {
         expect(lastSession.startH).toBe(23);
     });
 
-    it('should show correct status at 21:15', () => {
-        const date = new Date(2024, 0, 1, 21, 15, 0);
+    it('should show correct status at 23:00', () => {
+        const date = new Date(2024, 0, 1, 23, 0, 0);
         vi.setSystemTime(date);
 
         const { result } = renderHook(() => usePomodoro());
@@ -100,7 +100,7 @@ describe('usePomodoro', () => {
             vi.advanceTimersByTime(1000);
         });
 
-        // 21:15 is inside the Long Break which starts at 21:00
+        // 23:00 is inside the Long Break which starts at 22:55
         expect(result.current.statusLabel).toBe('Lange Pause 🧘');
     });
 
@@ -124,7 +124,7 @@ describe('usePomodoro', () => {
     });
 
     it('should play a sound when transitioning from work to break if sound is enabled', () => {
-        const date = new Date(2024, 0, 1, 14, 29, 59);
+        const date = new Date(2024, 0, 1, 14, 24, 59);
         vi.setSystemTime(date);
 
         const { result } = renderHook(() => usePomodoro());
@@ -135,7 +135,7 @@ describe('usePomodoro', () => {
         });
 
         // Initial render, state is work.
-        // Advance 2 seconds to 14:30:01
+        // Advance 2 seconds to 14:25:01
         act(() => {
             vi.advanceTimersByTime(2000);
         });
@@ -144,14 +144,14 @@ describe('usePomodoro', () => {
     });
 
     it('should NOT play a sound when transitioning if sound is disabled', () => {
-        const date = new Date(2024, 0, 1, 14, 29, 59);
+        const date = new Date(2024, 0, 1, 14, 24, 59);
         vi.setSystemTime(date);
 
         renderHook(() => usePomodoro());
 
         // Sound is disabled by default
 
-        // Advance 2 seconds to 14:30:01
+        // Advance 2 seconds to 14:25:01
         act(() => {
             vi.advanceTimersByTime(2000);
         });
@@ -160,11 +160,11 @@ describe('usePomodoro', () => {
     });
 
     it('should update progress bar correctly', () => {
-        // 14:05 starts work (25 mins).
-        // At 14:05:00, progress should be 0% (or close to it depending on implementation details)
-        // At 14:17:30, progress should be 50%
+        // 14:00 starts work (25 mins).
+        // At 14:00:00, progress should be 0% (or close to it depending on implementation details)
+        // At 14:12:30, progress should be 50%
 
-        const date = new Date(2024, 0, 1, 14, 17, 30);
+        const date = new Date(2024, 0, 1, 14, 12, 30);
         vi.setSystemTime(date);
 
         const { result } = renderHook(() => usePomodoro());
@@ -198,9 +198,9 @@ describe('usePomodoro', () => {
         checkTime(14, 35, 'Fokus 🚀 (2/4)');
         checkTime(15, 5, 'Fokus 🚀 (3/4)');
         checkTime(15, 35, 'Fokus 🚀 (4/4)');
-        // 16:00 is Long Pause
+        // 16:05 is inside Long Pause (starts 15:55)
         checkTime(16, 5, 'Lange Pause 🧘');
-        // 16:30 end of Long Pause, 5m break till 16:35
+        // 16:35 is inside next Work session (starts 16:20)
         checkTime(16, 35, 'Fokus 🚀 (1/4)');
     });
 
@@ -223,8 +223,8 @@ describe('usePomodoro', () => {
     });
 
     it('should return correct timeString', () => {
-        // 14:05:00 -> 25:00 remaining
-        const date = new Date(2024, 0, 1, 14, 5, 0);
+        // 14:00:00 -> 25:00 remaining
+        const date = new Date(2024, 0, 1, 14, 0, 0);
         vi.setSystemTime(date);
 
         const { result } = renderHook(() => usePomodoro());
