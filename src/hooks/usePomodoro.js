@@ -1,35 +1,98 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const CONFIG = {
-    workDuration: 25, // Minutes
-    lunchHour: 13,    // 13:00
-    lunchDuration: 60, // Minutes
-    startHour: 7,      // Timeline Start
-    endHour: 24        // Timeline End
-};
-
-const generateSessions = () => {
-    const newSessions = [];
-    for (let h = CONFIG.startHour; h < CONFIG.endHour; h++) {
-        if (h === 13) {
-            newSessions.push({ startH: 13, startM: 0, duration: 60, type: 'lunch', label: 'Mittagspause' });
-        } else {
-            newSessions.push({ startH: h, startM: 5, duration: 25, type: 'work', label: 'Fokus' });
-            newSessions.push({ startH: h, startM: 35, duration: 25, type: 'work', label: 'Fokus' });
-        }
-    }
-    return newSessions;
-};
-
-const getNowMinutes = (hours, minutes) => hours * 60 + minutes;
-
+const SESSIONS = [
+    { startH: 0, startM: 0, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 0, startM: 25, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 0, startM: 30, duration: 30, type: 'break', label: 'Lange Pause 🧘' },
+    { startH: 1, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 1, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 1, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 1, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 2, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 2, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 2, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 2, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 3, startM: 0, duration: 30, type: 'break', label: 'Lange Pause 🧘' },
+    { startH: 3, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 3, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 4, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 4, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 4, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 4, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 5, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 5, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 5, startM: 30, duration: 30, type: 'break', label: 'Lange Pause 🧘' },
+    { startH: 6, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 6, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 6, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 6, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 7, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 7, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 7, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 7, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 8, startM: 0, duration: 30, type: 'break', label: 'Lange Pause 🧘' },
+    { startH: 8, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 8, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 9, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 9, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 9, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 9, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 10, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 10, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 10, startM: 30, duration: 30, type: 'break', label: 'Lange Pause 🧘' },
+    { startH: 11, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 11, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 11, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 11, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 12, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 12, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 12, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 12, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 13, startM: 0, duration: 60, type: 'lunch', label: 'Mittagspause 🍱' },
+    { startH: 14, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 14, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 14, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 14, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 15, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 15, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 15, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 15, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 16, startM: 0, duration: 30, type: 'break', label: 'Lange Pause 🧘' },
+    { startH: 16, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 16, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 17, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 17, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 17, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 17, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 18, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 18, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 18, startM: 30, duration: 30, type: 'break', label: 'Lange Pause 🧘' },
+    { startH: 19, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 19, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 19, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 19, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 20, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 20, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 20, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 20, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 21, startM: 0, duration: 30, type: 'break', label: 'Lange Pause 🧘' },
+    { startH: 21, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 21, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 22, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 22, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 22, startM: 30, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 22, startM: 35, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 23, startM: 0, duration: 5, type: 'break', label: 'Pause ☕' },
+    { startH: 23, startM: 5, duration: 25, type: 'work', label: 'Fokus 🚀' },
+    { startH: 23, startM: 30, duration: 30, type: 'break', label: 'Lange Pause 🧘' }
+];
 
 export const usePomodoro = () => {
     const [timeString, setTimeString] = useState('00:00');
     const [statusLabel, setStatusLabel] = useState('Laden...');
     const [bgColor, setBgColor] = useState('#222');
     const [progress, setProgress] = useState(0);
-    const [sessions] = useState(generateSessions);
+    const [sessions] = useState(SESSIONS);
     const [currentSessionIndex, setCurrentSessionIndex] = useState(-1);
     const [isSoundEnabled, setIsSoundEnabled] = useState(false);
     const previousStateRef = useRef(null);
@@ -78,11 +141,10 @@ export const usePomodoro = () => {
 
     const toggleSound = useCallback(() => {
         if (!isSoundEnabled) {
-            // Unlock audio context on user interaction
             const baseUrl = import.meta.env.BASE_URL;
             const audioPath = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}notification.mp3`;
             const audio = new Audio(audioPath);
-            audio.volume = 0; // Play silently to unlock
+            audio.volume = 0;
             audio.play().catch(() => { });
         }
         setIsSoundEnabled(prev => !prev);
@@ -90,63 +152,56 @@ export const usePomodoro = () => {
 
     // Update timer logic
     useEffect(() => {
-        // Initialize worker
         workerRef.current = new Worker(new URL('../workers/timerWorker.js', import.meta.url));
 
         const updateTimer = () => {
             const now = new Date(Date.now() + timeOffset);
             const hours = now.getHours();
             const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
 
-            // Update Timeline Active State Logic
-            const nowMinutes = getNowMinutes(hours, minutes);
+            const nowMinutes = hours * 60 + minutes;
+
+            // Find current session
             let activeIndex = -1;
+            let currentSession = null;
 
-            // We need to calculate this to pass it to the view, or handle it in the view.
-            // In React, we update the state.
-            // Let's find the current session index.
-            sessions.forEach((session, index) => {
-                const sessionStart = session.startH * 60 + session.startM;
-                const sessionEnd = sessionStart + session.duration;
-
-                if (nowMinutes >= sessionStart && nowMinutes < sessionEnd) {
-                    activeIndex = index;
+            for (let i = 0; i < sessions.length; i++) {
+                const s = sessions[i];
+                const start = s.startH * 60 + s.startM;
+                const end = start + s.duration;
+                if (nowMinutes >= start && nowMinutes < end) {
+                    activeIndex = i;
+                    currentSession = s;
+                    break;
                 }
-            });
-            setCurrentSessionIndex(activeIndex);
+            }
 
+            setCurrentSessionIndex(activeIndex);
 
             let state = '';
             let secondsRemaining = 0;
             let totalDurationSeconds = 0;
 
-            const isLunchTime = (hours === CONFIG.lunchHour && minutes < CONFIG.lunchDuration);
+            if (currentSession) {
+                state = currentSession.type;
+                const sessionStartMinutes = currentSession.startH * 60 + currentSession.startM;
+                const sessionEndMinutes = sessionStartMinutes + currentSession.duration;
 
-            if (isLunchTime) {
-                state = 'lunch';
-                const endOfLunch = new Date(now);
-                endOfLunch.setHours(CONFIG.lunchHour, CONFIG.lunchDuration, 0, 0);
-                secondsRemaining = Math.floor((endOfLunch - now) / 1000);
-                totalDurationSeconds = CONFIG.lunchDuration * 60;
+                // Calculate end time object for accurate seconds diff
+                const endTime = new Date(now);
+                endTime.setHours(0, 0, 0, 0); // Reset to midnight
+                // Add minutes to midnight
+                endTime.setMinutes(sessionEndMinutes);
+
+                secondsRemaining = Math.floor((endTime - now) / 1000);
+                totalDurationSeconds = currentSession.duration * 60;
             } else {
-                let startOffset = 5;
-
-                const minuteInBlock = (minutes - startOffset + 60) % 30;
-                const secondsInBlock = (minuteInBlock * 60) + seconds;
-
-                if (minuteInBlock < CONFIG.workDuration) {
-                    state = 'work';
-                    const workSeconds = CONFIG.workDuration * 60;
-                    secondsRemaining = workSeconds - secondsInBlock;
-                    totalDurationSeconds = workSeconds;
-                } else {
-                    state = 'break';
-                    const cycleSeconds = 30 * 60;
-                    secondsRemaining = cycleSeconds - secondsInBlock;
-                    totalDurationSeconds = (30 - CONFIG.workDuration) * 60;
-                }
+                // Fallback for gaps
+                state = 'break';
+                secondsRemaining = 0;
+                totalDurationSeconds = 1;
             }
+
             // Sound Logic
             if (previousStateRef.current && previousStateRef.current !== state) {
                 if (isSoundEnabledRef.current && audioRef.current) {
@@ -155,8 +210,9 @@ export const usePomodoro = () => {
             }
             previousStateRef.current = state;
 
-            // 
-            // Render Logic (State Updates)
+            // Render Logic
+            if (secondsRemaining < 0) secondsRemaining = 0;
+
             const m = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
             const s = (secondsRemaining % 60).toString().padStart(2, '0');
             setTimeString(`${m}:${s}`);
@@ -166,25 +222,35 @@ export const usePomodoro = () => {
 
             switch (state) {
                 case 'lunch':
-                    label = 'Mittagspause 🍱';
+                    label = currentSession ? currentSession.label : 'Mittagspause 🍱';
                     color = 'var(--color-lunch)';
                     break;
                 case 'break':
-                    label = 'Pause ☕';
+                    label = currentSession ? currentSession.label : 'Pause ☕';
                     color = 'var(--color-break)';
                     break;
                 case 'work':
                 default:
-                    label = 'Fokus 🚀';
+                    label = currentSession ? currentSession.label : 'Fokus 🚀';
                     if (activeIndex !== -1) {
                         let workCount = 0;
-                        for (let i = 0; i <= activeIndex; i++) {
+                        let sessionGroupStart = 0;
+                        for (let j = activeIndex; j >= 0; j--) {
+                            if (sessions[j].type === 'lunch' || sessions[j].label.includes('Lange Pause')) {
+                                sessionGroupStart = j + 1;
+                                break;
+                            }
+                        }
+
+                        for (let i = sessionGroupStart; i <= activeIndex; i++) {
                             if (sessions[i] && sessions[i].type === 'work') {
                                 workCount++;
                             }
                         }
                         const cyclePos = ((workCount - 1) % 4) + 1;
-                        label += ` (${cyclePos}/4)`;
+                        if (!label.includes('(')) {
+                            label += ` (${cyclePos}/4)`;
+                        }
                     }
                     color = 'var(--color-focus)';
                     break;
@@ -193,7 +259,9 @@ export const usePomodoro = () => {
             setStatusLabel(label);
             setBgColor(color);
 
-            const progressPercent = 100 - ((secondsRemaining / totalDurationSeconds) * 100);
+            const progressPercent = totalDurationSeconds > 0
+                ? 100 - ((secondsRemaining / totalDurationSeconds) * 100)
+                : 0;
             setProgress(progressPercent);
         };
 
@@ -204,7 +272,7 @@ export const usePomodoro = () => {
         };
 
         workerRef.current.postMessage('start');
-        updateTimer(); // Initial call
+        updateTimer();
 
         return () => {
             workerRef.current.postMessage('stop');
@@ -226,7 +294,7 @@ export const usePomodoro = () => {
         currentSessionIndex,
         isDebug,
         debugTime,
-        timeOffset, // Exposed for timeline calculation if needed
+        timeOffset,
         isSoundEnabled,
         toggleSound
     };

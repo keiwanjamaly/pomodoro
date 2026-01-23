@@ -57,11 +57,12 @@ describe('usePomodoro', () => {
             vi.advanceTimersByTime(1000);
         });
 
+        // 14:05 is first session after lunch
         expect(result.current.statusLabel).toBe('Fokus 🚀 (1/4)');
         expect(result.current.bgColor).toBe('var(--color-focus)');
     });
 
-    it('should show correct status at 21:09', () => {
+    it('should show correct status at 21:09 (Long Break)', () => {
         const date = new Date(2024, 0, 1, 21, 9, 0);
         vi.setSystemTime(date);
 
@@ -71,7 +72,7 @@ describe('usePomodoro', () => {
             vi.advanceTimersByTime(1000);
         });
 
-        expect(result.current.statusLabel).toBe('Fokus 🚀 (3/4)');
+        expect(result.current.statusLabel).toBe('Lange Pause 🧘');
     });
 
     it('should generate sessions up to the end of the day', () => {
@@ -99,7 +100,8 @@ describe('usePomodoro', () => {
             vi.advanceTimersByTime(1000);
         });
 
-        expect(result.current.statusLabel).toBe('Fokus 🚀 (3/4)');
+        // 21:15 is inside the Long Break which starts at 21:00
+        expect(result.current.statusLabel).toBe('Lange Pause 🧘');
     });
 
     it('should parse time parameter with seconds from URL', () => {
@@ -161,7 +163,7 @@ describe('usePomodoro', () => {
         // 14:05 starts work (25 mins).
         // At 14:05:00, progress should be 0% (or close to it depending on implementation details)
         // At 14:17:30, progress should be 50%
-        
+
         const date = new Date(2024, 0, 1, 14, 17, 30);
         vi.setSystemTime(date);
 
@@ -176,11 +178,13 @@ describe('usePomodoro', () => {
     });
 
     it('should cycle through work positions correctly', () => {
+        // 14:00 Lunch ends
         // 14:05 -> 1/4
         // 14:35 -> 2/4
         // 15:05 -> 3/4
         // 15:35 -> 4/4
-        // 16:05 -> 1/4
+        // 16:00 -> Long Break Starts
+        // 16:35 -> 1/4 (after long break)
 
         const checkTime = (hours, minutes, expectedLabel) => {
             const date = new Date(2024, 0, 1, hours, minutes, 0);
@@ -194,7 +198,10 @@ describe('usePomodoro', () => {
         checkTime(14, 35, 'Fokus 🚀 (2/4)');
         checkTime(15, 5, 'Fokus 🚀 (3/4)');
         checkTime(15, 35, 'Fokus 🚀 (4/4)');
-        checkTime(16, 5, 'Fokus 🚀 (1/4)');
+        // 16:00 is Long Pause
+        checkTime(16, 5, 'Lange Pause 🧘');
+        // 16:30 end of Long Pause, 5m break till 16:35
+        checkTime(16, 35, 'Fokus 🚀 (1/4)');
     });
 
     it('should toggle sound enabled state', () => {
@@ -229,4 +236,36 @@ describe('usePomodoro', () => {
         // 1 second passed, so 24:59
         expect(result.current.timeString).toBe('24:59');
     });
+
+    it('should show correct status at 00:05', () => {
+        const date = new Date(2024, 0, 1, 0, 5, 0);
+        vi.setSystemTime(date);
+
+        const { result } = renderHook(() => usePomodoro());
+
+        act(() => {
+            vi.advanceTimersByTime(1000);
+        });
+
+        // 00:05 should be the very first session of the day
+        expect(result.current.statusLabel).toBe('Fokus 🚀 (1/4)');
+        expect(result.current.bgColor).toBe('var(--color-focus)');
+    });
+
+    it('should show correct status before lunch at 12:40 (4/4)', () => {
+        const date = new Date(2024, 0, 1, 12, 40, 0);
+        vi.setSystemTime(date);
+
+        const { result } = renderHook(() => usePomodoro());
+
+        act(() => {
+            vi.advanceTimersByTime(1000);
+        });
+
+        // Current schedule: 12:35-13:00 is Work. 
+        // 13:00 is Lunch.
+        // Working backwards from 13:00 -> 12:35 is the 4th session of the block starting after 10:30 Long Break.
+        expect(result.current.statusLabel).toBe('Fokus 🚀 (4/4)');
+    });
 });
+
